@@ -1,6 +1,7 @@
 package com.example.android.sunshine.app.fragment;
 
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -13,9 +14,11 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import com.example.android.sunshine.app.DetailActivity;
 import com.example.android.sunshine.app.R;
 
 import org.json.JSONArray;
@@ -97,6 +100,21 @@ public class ForecastFragment extends Fragment {
         mForecastAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textview, weekForecast);
         ListView lst = (ListView) rootView.findViewById(R.id.listview_forecast);
         lst.setAdapter(mForecastAdapter);
+        lst.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                //Meu Codigo
+                //Toast.makeText(getActivity(), parent.getItemAtPosition(position).toString(), Toast.LENGTH_LONG).show();
+                //Udacity
+                String forecast = mForecastAdapter.getItem(position);
+                //Toast.makeText(getActivity(), forecast, Toast.LENGTH_LONG).show();
+
+                //CHAMANDO OUTRA ACTIVITY
+                Intent i = new Intent(getActivity(), DetailActivity.class);
+                i.putExtra(Intent.EXTRA_TEXT, forecast);
+                startActivity(i);
+            }
+        });
 
         //----------------------------------------------------------------------------------------
 
