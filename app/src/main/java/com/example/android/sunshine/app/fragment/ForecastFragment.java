@@ -20,6 +20,7 @@ import android.widget.ListView;
 
 import com.example.android.sunshine.app.DetailActivity;
 import com.example.android.sunshine.app.R;
+import com.example.android.sunshine.app.SettingsActivity;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -65,6 +66,8 @@ public class ForecastFragment extends Fragment {
         int id = item.getItemId();
         if (id == R.id.action_refresh) {
             new FetchWeatherTask().execute(b);
+        } else if (id == R.id.action_forecast_frag_settings) {
+            startActivity(new Intent(getActivity(), SettingsActivity.class));
         }
         return super.onOptionsItemSelected(item);
     }
