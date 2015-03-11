@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.text.format.Time;
 import android.util.Log;
@@ -76,6 +77,8 @@ public class ForecastFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
+        String cep = PreferenceManager.getDefaultSharedPreferences(this.getActivity()).getString("location", "94043");
+
         b = new Uri.Builder();
         b.scheme("http");
         b.authority("api.openweathermap.org");
@@ -83,7 +86,7 @@ public class ForecastFragment extends Fragment {
         b.appendPath("2.5");
         b.appendPath("forecast");
         b.appendPath("daily");
-        b.appendQueryParameter("q", "74810070");
+        b.appendQueryParameter("q", cep);
         b.appendQueryParameter("mode", "json");
         b.appendQueryParameter("units", "metric");
         b.appendQueryParameter("cnt", "7");
