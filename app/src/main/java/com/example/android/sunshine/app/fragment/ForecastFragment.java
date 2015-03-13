@@ -2,6 +2,7 @@ package com.example.android.sunshine.app.fragment;
 
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -35,13 +36,13 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
  */
 public class ForecastFragment extends Fragment {
+
+    private final String LOG_TAG = ForecastFragment.class.getSimpleName();
 
     private View rootView;
     //"http://api.openweathermap.org/data/2.5/forecast/daily?q=74810070&mode=json&units=metric&cnt=7"
@@ -66,44 +67,36 @@ public class ForecastFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_refresh) {
-            new FetchWeatherTask().execute(b);
+            updateWeather();
+            return true;
         } else if (id == R.id.action_forecast_frag_settings) {
             startActivity(new Intent(getActivity(), SettingsActivity.class));
         }
         return super.onOptionsItemSelected(item);
     }
 
+    private void openPreferredLocationInMap () {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.getActivity());
+        String cep = prefs.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default));
+
+        Uri geoLocation = Uri.parse("geo:0,0").buildUpon().appendQueryParameter("q", cep).build();
+
+        Intent i = new Intent(Intent.ACTION_VIEW);
+        i.setData(geoLocation);
+
+        if (i.resolveActivity(getActivity().getPackageManager()) != null) {
+            startActivity(i);
+        } else {
+            Log.d(LOG_TAG, "Couldn't call " + cep + ", no receiving apps installed!");
+        }
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        String cep = PreferenceManager.getDefaultSharedPreferences(this.getActivity()).getString("location", "94043");
+        mForecastAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textview, new ArrayList<String>());
 
-        b = new Uri.Builder();
-        b.scheme("http");
-        b.authority("api.openweathermap.org");
-        b.appendPath("data");
-        b.appendPath("2.5");
-        b.appendPath("forecast");
-        b.appendPath("daily");
-        b.appendQueryParameter("q", cep);
-        b.appendQueryParameter("mode", "json");
-        b.appendQueryParameter("units", "metric");
-        b.appendQueryParameter("cnt", "7");
-
-        String[] forecastArray = {
-                "Today - Sunny 88/63",
-                "Tomorrow - Foggy 70/46",
-                "Weds - Cloudy 72/63",
-                "Thurs - Asteroids 64/51",
-                "Fri - Heavy Rain 70/46",
-                "Sat - HELP TRAPPED IN WEATHERSTATION 60/51",
-                "Sun - Sunny 76/68"
-        };
-
-        List<String> weekForecast = new ArrayList<String>(Arrays.asList(forecastArray));
-
-        mForecastAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textview, weekForecast);
         ListView lst = (ListView) rootView.findViewById(R.id.listview_forecast);
         lst.setAdapter(mForecastAdapter);
         lst.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -122,13 +115,34 @@ public class ForecastFragment extends Fragment {
             }
         });
 
-        //----------------------------------------------------------------------------------------
-
-        //new FetchWeatherTask().execute(b);
-
-        //----------------------------------------------------------------------------------------
-
         return rootView;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        updateWeather ();
+    }
+
+    private void updateWeather () {
+        FetchWeatherTask weatherTask = new FetchWeatherTask();
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.getActivity());
+        String cep = prefs.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default));
+
+        b = new Uri.Builder();
+        b.scheme("http");
+        b.authority("api.openweathermap.org");
+        b.appendPath("data");
+        b.appendPath("2.5");
+        b.appendPath("forecast");
+        b.appendPath("daily");
+        b.appendQueryParameter("q", cep);
+        b.appendQueryParameter("mode", "json");
+        b.appendQueryParameter("units", "metric");
+        b.appendQueryParameter("cnt", "7");
+
+        weatherTask.execute(b);
     }
 
     private class FetchWeatherTask extends AsyncTask<Uri.Builder, Void, String[]> {
@@ -317,13 +331,22 @@ public class ForecastFragment extends Fragment {
         /**
          * Prepare the weather high/lows for presentation.
          */
-        private String formatHighLows(double high, double low) {
-            // For presentation, assume the user doesn't care about tenths of a degree.
+        private String formatHighLows (double high, double low) {
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String unitType = sharedPreferences.getString(getString(R.string.pref_temperature_unit_key),
+                    getString(R.string.pref_temperature_unit_metric));
+
+            if (!unitType.equals(getString(R.string.pref_temperature_unit_metric))) {
+                high = (high * 1.8) + 32;
+                low = (low * 1.8) + 32;
+            } else {
+                Log.d(LOG_TAG, "Unit type not found: " + unitType);
+            }
+
             long roundedHigh = Math.round(high);
             long roundedLow = Math.round(low);
 
-            String highLowStr = roundedHigh + "/" + roundedLow;
-            return highLowStr;
+            return roundedHigh + "/" + roundedLow;
         }
 
     }
