@@ -71,6 +71,8 @@ public class ForecastFragment extends Fragment {
             return true;
         } else if (id == R.id.action_forecast_frag_settings) {
             startActivity(new Intent(getActivity(), SettingsActivity.class));
+        } else if (id == R.id.action_map) {
+            openPreferredLocationInMap();
         }
         return super.onOptionsItemSelected(item);
     }
